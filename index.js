@@ -56,8 +56,9 @@
       return pre;
     };
     manyToOne = function(src, finalDest, options){
-      var finalDir, predicates, pre, i$, len$, p, ref$, pp;
+      var finalCache, finalDir, predicates, pre, i$, len$, p, ref$, pp;
       options == null && (options = {});
+      finalCache = finalDest;
       finalDir = path.dirname(finalDest);
       finalDest = path.basename(finalDest);
       if (options != null) {
@@ -65,7 +66,7 @@
       }
       options.compilers == null && (options.compilers = []);
       predicates = options.compilers;
-      pre = gulp.src(src).pipe(plumber()).pipe(cache(finalDest));
+      pre = gulp.src(src).pipe(plumber()).pipe(cache(finalCache));
       if (predicates != null && _.isArray(predicates)) {
         for (i$ = 0, len$ = predicates.length; i$ < len$; ++i$) {
           p = predicates[i$];
@@ -74,7 +75,7 @@
       } else if (predicates != null) {
         pre = pre.pipe(gif(predicates.pred, predicates.plugin));
       }
-      pre = pre.pipe(gulp.dest(options.tempBuild)).pipe(remember(finalDest)).pipe(concat(finalDest));
+      pre = pre.pipe(gulp.dest(options.tempBuild)).pipe(remember(finalCache)).pipe(concat(finalDest));
       if (options.post != null && _.isFunction(options.post)) {
         pre = pre.pipe(options.post);
       }

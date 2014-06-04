@@ -69,6 +69,8 @@ _module = ->
 
         options ?= {}
 
+        final-cache = final-dest
+
         final-dir = path.dirname(final-dest)
         final-dest = path.basename(final-dest)
 
@@ -79,7 +81,7 @@ _module = ->
 
         pre = gulp.src src
                 .pipe plumber()
-                .pipe cache final-dest
+                .pipe cache final-cache
 
         if predicates? and _.is-array(predicates)
             for p in predicates 
@@ -88,7 +90,7 @@ _module = ->
                 pre := pre.pipe gif(predicates.pred, predicates.plugin)
 
         pre := pre.pipe gulp.dest options.temp-build
-                .pipe remember(final-dest)
+                .pipe remember(final-cache)
                 .pipe concat final-dest
 
         if options.post? and _.is-function(options.post)
