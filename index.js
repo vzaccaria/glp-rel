@@ -31,6 +31,7 @@
     var manyToMany, manyToOne, iface;
     manyToMany = function(src, finalDir, options){
       var pre, predicates, i$, len$, p, ref$, pp;
+      options == null && (options = {});
       options.compilers == null && (options.compilers = []);
       pre = gulp.src(src).pipe(plumber()).pipe(cache(finalDir));
       predicates = options.compilers;

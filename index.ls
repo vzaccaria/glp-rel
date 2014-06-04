@@ -35,6 +35,7 @@ _module = ->
 
     many-to-many = (src, final-dir, options) ->
 
+        options ?= {}
         options.compilers ?= []
 
         pre = gulp.src src
