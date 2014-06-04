@@ -8,6 +8,7 @@ cache    = require 'gulp-cached'
 remember = require 'gulp-remember'
 cache    = require 'gulp-cached'
 concat   = require 'gulp-concat'
+plumber  = require 'gulp-plumber'
 path     = require 'path'
 
 _.mixin(_.str.exports());

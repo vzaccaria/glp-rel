@@ -27,6 +27,7 @@
     "gulp-cached": "0.0.3",
     "gulp-remember": "^0.2.0",
     "gulp-concat": "^2.2.0",
-    "gulp": "^3.7.0"
+    "gulp": "^3.7.0",
+    "gulp-plumber": "^0.6.2"
   }
 }
