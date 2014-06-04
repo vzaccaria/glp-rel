@@ -97,6 +97,10 @@ _module = ->
         if options.post? and _.is-array(options.post) 
             for pp in options.post 
                 pre := pre.pipe pp
+
+        pre := pre.pipe gulp.dest final-dir
+
+        return pre
           
     iface = { 
       many-to-one: many-to-one

@@ -56,7 +56,7 @@
       return pre;
     };
     manyToOne = function(src, finalDest, options){
-      var finalDir, predicates, pre, i$, len$, p, ref$, pp, results$ = [];
+      var finalDir, predicates, pre, i$, len$, p, ref$, pp;
       options == null && (options = {});
       finalDir = path.dirname(finalDest);
       finalDest = path.basename(finalDest);
@@ -81,10 +81,11 @@
       if (options.post != null && _.isArray(options.post)) {
         for (i$ = 0, len$ = (ref$ = options.post).length; i$ < len$; ++i$) {
           pp = ref$[i$];
-          results$.push(pre = pre.pipe(pp));
+          pre = pre.pipe(pp);
         }
-        return results$;
       }
+      pre = pre.pipe(gulp.dest(finalDir));
+      return pre;
     };
     iface = {
       manyToOne: manyToOne,
