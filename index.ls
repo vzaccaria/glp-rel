@@ -1,14 +1,14 @@
 
-_               = require('underscore')
-_.str           = require('underscore.string');
-winston         = require('winston')
-
-gulp     = require('gulp')
-gif      = require('gulp-if')
+_        = require 'underscore'
+_.str    = require 'underscore.string'
+winston  = require 'winston'
+gulp     = require 'gulp'
+gif      = require 'gulp-if'
 cache    = require 'gulp-cached'
 remember = require 'gulp-remember'
 cache    = require 'gulp-cached'
 concat   = require 'gulp-concat'
+path     = require 'path'
 
 _.mixin(_.str.exports());
 _.str.include('Underscore.string', 'string');
