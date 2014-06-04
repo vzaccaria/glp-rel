@@ -1,0 +1,27 @@
+{
+  "name": "glp-rel",
+  "version": "0.0.0",
+  "description": "Make gulp processing even easier with many-to-one and many-to-many",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vzaccaria/glp-rel.git"
+  },
+  "keywords": [
+    "gulp"
+  ],
+  "author": "Vittorio Zaccaria",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/vzaccaria/glp-rel/issues"
+  },
+  "homepage": "https://github.com/vzaccaria/glp-rel",
+  "dependencies": {
+    "winston": "^0.7.3",
+    "underscore": "^1.6.0",
+    "underscore.string": "^2.3.3"
+  }
+}
