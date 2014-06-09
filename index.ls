@@ -47,10 +47,10 @@ _module = ->
         if predicates? and _.is-array(predicates)
 
             for p in predicates 
-                pre := pre.pipe gif(p.pred, p.plugin)
+                pre := pre.pipe gif(p.pred, p.plugin())
 
         else if predicates?
-                pre := pre.pipe gif(predicates.pred, predicates.plugin)
+                pre := pre.pipe gif(predicates.pred, predicates.plugin())
 
         if options.post? and _.is-function(options.post)
             pre := pre.pipe options.post 
@@ -85,9 +85,9 @@ _module = ->
 
         if predicates? and _.is-array(predicates)
             for p in predicates 
-                pre := pre.pipe gif(p.pred, p.plugin)
+                pre := pre.pipe gif(p.pred, p.plugin())
         else if predicates?
-                pre := pre.pipe gif(predicates.pred, predicates.plugin)
+                pre := pre.pipe gif(predicates.pred, predicates.plugin())
 
         pre := pre.pipe gulp.dest options.temp-build
                 .pipe remember(final-cache)

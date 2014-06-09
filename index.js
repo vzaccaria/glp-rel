@@ -38,18 +38,19 @@
       if (predicates != null && _.isArray(predicates)) {
         for (i$ = 0, len$ = predicates.length; i$ < len$; ++i$) {
           p = predicates[i$];
-          pre = pre.pipe(gif(p.pred, p.plugin));
+          pre = pre.pipe(gif(p.pred, p.plugin()));
         }
       } else if (predicates != null) {
-        pre = pre.pipe(gif(predicates.pred, predicates.plugin));
+        pre = pre.pipe(gif(predicates.pred, predicates.plugin()));
       }
-      if (options.post != null && _.isFunction(options.post)) {
-        pre = pre.pipe(options.post);
-      }
-      if (options.post != null && _.isArray(options.post)) {
-        for (i$ = 0, len$ = (ref$ = options.post).length; i$ < len$; ++i$) {
-          pp = ref$[i$];
-          pre = pre.pipe(pp);
+      if (options.post != null) {
+        if (_.isArray(options.post)) {
+          for (i$ = 0, len$ = (ref$ = options.post).length; i$ < len$; ++i$) {
+            pp = ref$[i$];
+            pre = pre.pipe(pp());
+          }
+        } else {
+          pre = pre.pipe(options.post());
         }
       }
       pre = pre.pipe(gulp.dest(finalDir));
@@ -65,24 +66,26 @@
         options.tempBuild == null && (options.tempBuild = finalDir + "/build");
       }
       options.compilers == null && (options.compilers = []);
+      console.log(finalDest);
       predicates = options.compilers;
-      pre = gulp.src(src).pipe(plumber()).pipe(cache(finalCache));
+      pre = gulp.src(src).pipe(plumber());
       if (predicates != null && _.isArray(predicates)) {
         for (i$ = 0, len$ = predicates.length; i$ < len$; ++i$) {
           p = predicates[i$];
-          pre = pre.pipe(gif(p.pred, p.plugin));
+          pre = pre.pipe(gif(p.pred, p.plugin()));
         }
       } else if (predicates != null) {
-        pre = pre.pipe(gif(predicates.pred, predicates.plugin));
+        pre = pre.pipe(gif(predicates.pred, predicates.plugin()));
       }
-      pre = pre.pipe(gulp.dest(options.tempBuild)).pipe(remember(finalCache)).pipe(concat(finalDest));
-      if (options.post != null && _.isFunction(options.post)) {
-        pre = pre.pipe(options.post);
-      }
-      if (options.post != null && _.isArray(options.post)) {
-        for (i$ = 0, len$ = (ref$ = options.post).length; i$ < len$; ++i$) {
-          pp = ref$[i$];
-          pre = pre.pipe(pp);
+      pre = pre.pipe(gulp.dest(options.tempBuild)).pipe(concat(finalDest));
+      if (options.post != null) {
+        if (_.isArray(options.post)) {
+          for (i$ = 0, len$ = (ref$ = options.post).length; i$ < len$; ++i$) {
+            pp = ref$[i$];
+            pre = pre.pipe(pp());
+          }
+        } else {
+          pre = pre.pipe(options.post());
         }
       }
       pre = pre.pipe(gulp.dest(finalDir));
