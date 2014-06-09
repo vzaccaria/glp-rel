@@ -52,12 +52,12 @@ _module = ->
         else if predicates?
                 pre := pre.pipe gif(predicates.pred, predicates.plugin())
 
-        if options.post? and _.is-function(options.post)
-            pre := pre.pipe options.post 
-
-        if options.post? and _.is-array(options.post) 
-            for pp in options.post 
-                pre := pre.pipe pp
+        if options.post? 
+            if  _.is-array(options.post) 
+                for pp in options.post 
+                    pre := pre.pipe pp()
+            else 
+                pre := pre.pipe options.post()
 
 
         pre := pre.pipe gulp.dest final-dir
@@ -77,11 +77,13 @@ _module = ->
         options?.temp-build ?= "#final-dir/build"
         options.compilers ?= []
 
+        console.log final-dest
+
         predicates = options.compilers
 
         pre = gulp.src src
                 .pipe plumber()
-                .pipe cache final-cache
+                # .pipe cache final-cache
 
         if predicates? and _.is-array(predicates)
             for p in predicates 
@@ -90,15 +92,15 @@ _module = ->
                 pre := pre.pipe gif(predicates.pred, predicates.plugin())
 
         pre := pre.pipe gulp.dest options.temp-build
-                .pipe remember(final-cache)
+                # .pipe remember(final-cache)
                 .pipe concat final-dest
 
-        if options.post? and _.is-function(options.post)
-            pre := pre.pipe options.post 
-
-        if options.post? and _.is-array(options.post) 
-            for pp in options.post 
-                pre := pre.pipe pp
+        if options.post? 
+            if  _.is-array(options.post) 
+                for pp in options.post 
+                    pre := pre.pipe pp()
+            else 
+                pre := pre.pipe options.post()
 
         pre := pre.pipe gulp.dest final-dir
 
