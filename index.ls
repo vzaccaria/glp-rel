@@ -1,15 +1,87 @@
 
-_        = require 'underscore'
-_.str    = require 'underscore.string'
-winston  = require 'winston'
-gulp     = require 'gulp'
-gif      = require 'gulp-if'
-cache    = require 'gulp-cached'
-remember = require 'gulp-remember'
-cache    = require 'gulp-cached'
-concat   = require 'gulp-concat'
-plumber  = require 'gulp-plumber'
-path     = require 'path'
+_            = require 'underscore'
+_.str        = require 'underscore.string'
+winston      = require 'winston'
+gulp         = require 'gulp'
+gif          = require 'gulp-if'
+cache        = require 'gulp-cached'
+remember     = require 'gulp-remember'
+cache        = require 'gulp-cached'
+concat       = require 'gulp-concat'
+path         = require 'path'
+multipipe    = require 'multipipe'
+Notification = require('node-notifier');
+plumber      = require('gulp-plumber')
+through      = require('through2');
+fork         = require 'fork-stream'
+map          = require('map-stream')
+combined     = require('combined-stream')
+passthrough  = require('stream').PassThrough
+duplexer     = require('duplexer2')
+tap          = require('gulp-debug')
+filter       = require("through2-filter")
+notifier     = new Notification();
+path         = require 'path'
+
+debug = require('debug')('glp:gulp-relations')
+
+debug-file = (title, object) -> 
+    pp = path.extname(object.path)
+    bn = path.basename(object.path)
+    debug("#{_.str.pad(title,25)} | -> #{_.str.pad(bn,30)} #pp ")
+
+t = (title) -> 
+    return through.obj (object, enc, callback) ->
+        debug-file(title, object)
+        this.push(object)
+        callback()
+
+snake = duplexer
+
+x = (title, head) ->
+    tail = t(title)
+    head.pipe(tail)
+    return snake(head, tail)
+
+
+
+# d = (title, args) ->
+#     return args ++ [ t(title) ]
+
+
+conditional-stream = (name, condition, plugin) ->
+
+    # t = (name, stream) -> multipipe(stream, tap(title: name))
+    # t = -> it
+
+    stream-split = through.obj()
+    # stream-join  = through.obj()
+    stream-join = combined.create()
+
+    merged-stream = (s1, s2) ->
+
+
+    to-plugin = filter.obj -> 
+        cc = condition(it)
+        if cc 
+            debug-file "send to `#name`:" it 
+        return cc 
+
+    no-plugin = filter.obj ->
+        cc = not condition(it)
+        # if cc then debug("Not sending to #{it.path} plugin")
+        return cc 
+
+    a = stream-split.pipe(to-plugin).pipe(plugin)
+    b = stream-split.pipe(no-plugin)
+
+    # a.pipe(stream-join)
+    # b.pipe(stream-join)
+
+    stream-join.append(a)
+    stream-join.append(b)
+
+    return duplexer(stream-split, stream-join)
 
 _.mixin(_.str.exports());
 _.str.include('Underscore.string', 'string');
@@ -33,78 +105,66 @@ pdeb    = winston.warn
 
 _module = ->
 
-    many-to-many = (src, final-dir, options) ->
+
+
+    many-to-many = (src, final-dir, options, is-to-one = false) ->
+
+        signal-error = ->
+            notifier.notify message: it
+            debug "Error while processing #src"
+            debug it
+
+        wrap-plugin = (p) ->
+            p.on 'error', signal-error
 
         options ?= {}
         options.compilers ?= []
 
-        pre = gulp.src src
-                .pipe plumber()
-                .pipe cache final-dir
+        filters = options.compilers
+        post    = options.post
 
-        predicates = options.compilers
+        final-dest = ""
 
-        if predicates? and _.is-array(predicates)
+        if is-to-one
+            final-dest := path.basename(final-dir)
+            final-dir := path.dirname(final-dir)
+            options?.temp-build ?= "#final-dir/build"
 
-            for p in predicates 
-                pre := pre.pipe gif(p.pred, p.plugin())
+        if is-to-one
+            debug("Concatenating files #src to #final-dest in #final-dir - temporary build: #{options.temp-build}")
+        else   
+            debug("Processing files #src to #final-dir")
 
-        else if predicates?
-                pre := pre.pipe gif(predicates.pred, predicates.plugin())
+        args = [ gulp.src(src) ]
 
-        if options.post? 
-            if  _.is-array(options.post) 
-                for pp in options.post 
-                    pre := pre.pipe pp()
-            else 
-                pre := pre.pipe options.post()
+        # args = args ++ [plumber()]
 
+        if filters? 
+            if not _.is-array(filters)
+                filters := [filters]
 
-        pre := pre.pipe gulp.dest final-dir
+            for p in filters 
+                args := (args ++ [ conditional-stream(p.name, p.pred, p.plugin())])
 
-        return pre
+        if post? 
+            if not _.is-array(post)
+                post := [ post ]
+
+            for pp in post 
+                args := args ++ [ pp() ]
+
+        if is-to-one
+            args := args ++ [ gulp.dest options.temp-build ] ++ [ concat(final-dest) ]
+
+        args := args ++ [gulp.dest final-dir]
+
+        stream = multipipe.apply(multipipe, args)
+
+        return stream
 
 
     many-to-one = (src, final-dest, options) ->
-
-        options ?= {}
-
-        final-cache = final-dest
-
-        final-dir = path.dirname(final-dest)
-        final-dest = path.basename(final-dest)
-
-        options?.temp-build ?= "#final-dir/build"
-        options.compilers ?= []
-
-        console.log final-dest
-
-        predicates = options.compilers
-
-        pre = gulp.src src
-                .pipe plumber()
-                # .pipe cache final-cache
-
-        if predicates? and _.is-array(predicates)
-            for p in predicates 
-                pre := pre.pipe gif(p.pred, p.plugin())
-        else if predicates?
-                pre := pre.pipe gif(predicates.pred, predicates.plugin())
-
-        pre := pre.pipe gulp.dest options.temp-build
-                # .pipe remember(final-cache)
-                .pipe concat final-dest
-
-        if options.post? 
-            if  _.is-array(options.post) 
-                for pp in options.post 
-                    pre := pre.pipe pp()
-            else 
-                pre := pre.pipe options.post()
-
-        pre := pre.pipe gulp.dest final-dir
-
-        return pre
+        many-to-many src, final-dest, options, true
           
     iface = { 
       many-to-one: many-to-one
