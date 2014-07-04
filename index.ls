@@ -20,6 +20,7 @@ passthrough  = require('stream').PassThrough
 duplexer     = require('duplexer2')
 tap          = require('gulp-debug')
 filter       = require("through2-filter")
+es           = require 'event-stream'
 notifier     = new Notification();
 path         = require 'path'
 
@@ -28,38 +29,46 @@ debug = require('debug')('glp:gulp-relations')
 debug-file = (title, object) -> 
     pp = path.extname(object.path)
     bn = path.basename(object.path)
-    debug("#{_.str.pad(title,25)} | -> #{_.str.pad(bn,30)} #pp ")
+    debug("#{_.str.pad(title,35)} | -> #{_.str.pad(bn,30)} #pp ")
 
 t = (title) -> 
-    return through.obj (object, enc, callback) ->
-        debug-file(title, object)
-        this.push(object)
-        callback()
+    t = through.obj()
+    # t.on 'data', ->
+    #     debug-file(title, it)
+    # t.on 'end', ->
+    #     debug("End: #title")
+    # t.on 'finish', ->
+    #     debug("finish: #title")
+    # t.on 'stop', ->
+    #     debug("Stop.")
+    return t
 
 snake = duplexer
 
 x = (title, head) ->
     tail = t(title)
     head.pipe(tail)
-    return snake(head, tail)
+    return es.duplex(head, tail)
 
 
 
 # d = (title, args) ->
 #     return args ++ [ t(title) ]
 
+trace = (stream) ->
+    events = [ \end \finish \stop \err \error \done ]
+    for e in events 
+        stream.on e, 
+            let x = e
+                ->
+                    debug(x, it)
 
 conditional-stream = (name, condition, plugin) ->
 
-    # t = (name, stream) -> multipipe(stream, tap(title: name))
-    # t = -> it
+    # use-th = false 
 
-    stream-split = through.obj()
-    # stream-join  = through.obj()
-    stream-join = combined.create()
-
-    merged-stream = (s1, s2) ->
-
+    stream-join     = es.through()
+    stream-split    = es.through()
 
     to-plugin = filter.obj -> 
         cc = condition(it)
@@ -75,39 +84,45 @@ conditional-stream = (name, condition, plugin) ->
     a = stream-split.pipe(to-plugin).pipe(plugin)
     b = stream-split.pipe(no-plugin)
 
-    # a.pipe(stream-join)
-    # b.pipe(stream-join)
+    stream-join = es.merge(a,b)
 
-    stream-join.append(a)
-    stream-join.append(b)
+    # trace stream-join
 
-    return duplexer(stream-split, stream-join)
+    return es.duplex(stream-split, stream-join)
 
 _.mixin(_.str.exports());
 _.str.include('Underscore.string', 'string');
 
 module-name = _.pad("glp-rel", 10)
 
-disp-ok = -> 
-  winston.info "> #module-name < Ok"
-  
-disp-ko = -> 
-  winston.error "> #module-name < Ok" it.toString()
-
-disp-msg = -> 
-  winston.info "> #module-name <   : " it.toString()
-  
-disp    = winston.info
-pdisp   = console.log
-pdeb    = winston.warn
 
 
+
+merge-multiple = (arr) ->
+    debug("Mergin pipe #{arr.length}")
+    init = es.through()
+    merge = (m, s) ->
+        return m.pipe(s)
+    return _.foldl arr, merge, init
 
 _module = ->
 
+    sequence = (g) ->
+        (name, arr, code) ->
+            n = 0
+            debug("Creating #name#n - #{arr[n]}")
+            c = g.task "#name#n", [arr[n]]
+            n = n + 1
+            while n < arr.length
+                let k = n
+                    debug("Creating #name#k - #{arr[n]} ")
+                    g.task "#name#k", [ "#name#{k-1}", arr[k] ]
+                n = n + 1
+            debug("Creating #name - dependency: #name#{n-1}")
+            g.task "#name", [ "#name#{n-1}" ], code
 
 
-    many-to-many = (src, final-dir, options, is-to-one = false) ->
+    many-to-many = (name, src, final-dir, options, is-to-one = false) ->
 
         signal-error = ->
             notifier.notify message: it
@@ -130,10 +145,10 @@ _module = ->
             final-dir := path.dirname(final-dir)
             options?.temp-build ?= "#final-dir/build"
 
-        if is-to-one
-            debug("Concatenating files #src to #final-dest in #final-dir - temporary build: #{options.temp-build}")
-        else   
-            debug("Processing files #src to #final-dir")
+        # if is-to-one
+        #     debug("Concatenating files #src to #final-dest in #final-dir - temporary build: #{options.temp-build}")
+        # else   
+        #     debug("Processing files #src to #final-dir")
 
         args = [ gulp.src(src) ]
 
@@ -151,24 +166,29 @@ _module = ->
                 post := [ post ]
 
             for pp in post 
-                args := args ++ [ pp() ]
+                args := (args ++ [ pp() ])
 
         if is-to-one
-            args := args ++ [ gulp.dest options.temp-build ] ++ [ concat(final-dest) ]
+            args := args ++ [ (gulp.dest options.temp-build) ] ++ [ concat(final-dest) ]
 
-        args := args ++ [gulp.dest final-dir]
+        args := (args ++ [ (gulp.dest final-dir)])
 
-        stream = multipipe.apply(multipipe, args)
+        debug("Stream #name with #{args.length} components") 
+        # for e in args 
+            # debug(e._events)
+        stream = merge-multiple(args)
 
         return stream
 
 
-    many-to-one = (src, final-dest, options) ->
-        many-to-many src, final-dest, options, true
+    many-to-one = (name, src, final-dest, options) ->
+        many-to-many name, src, final-dest, options, true
           
     iface = { 
       many-to-one: many-to-one
       many-to-many: many-to-many
+      tap: x 
+      seq: sequence
     }
   
     return iface
