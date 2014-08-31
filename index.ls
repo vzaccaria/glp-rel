@@ -81,7 +81,7 @@ conditional-stream = (name, condition, plugin) ->
         # if cc then debug("Not sending to #{it.path} plugin")
         return cc 
 
-    a = stream-split.pipe(to-plugin).pipe(plugin)
+    a = stream-split.pipe(to-plugin).pipe(plumber()).pipe(plugin)
     b = stream-split.pipe(no-plugin)
 
     stream-join = es.merge(a,b)

@@ -75,7 +75,7 @@
       cc = !condition(it);
       return cc;
     });
-    a = streamSplit.pipe(toPlugin).pipe(plugin);
+    a = streamSplit.pipe(toPlugin).pipe(plumber()).pipe(plugin);
     b = streamSplit.pipe(noPlugin);
     streamJoin = es.merge(a, b);
     return es.duplex(streamSplit, streamJoin);
