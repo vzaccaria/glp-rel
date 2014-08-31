@@ -1,6 +1,6 @@
 {
   "name": "glp-rel",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Make gulp processing even easier with many-to-one and many-to-many",
   "main": "index.js",
   "scripts": {
